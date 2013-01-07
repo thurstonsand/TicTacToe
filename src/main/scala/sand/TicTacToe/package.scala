@@ -13,4 +13,6 @@ package object TicTacToe {
   val O_Cell = 1
   val X_Cell = 2
 
+  def nextPlayer(player: Int) = if ( player == X_Cell ) O_Cell else X_Cell
+  def playerToString(p: Int) = p match { case Empty_Cell => "E"; case O_Cell => "O"; case X_Cell => "X"; case _ => "?" }
 }

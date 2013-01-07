@@ -24,12 +24,21 @@ import sand.TicTacToe._
  */
 object App {
 
-
   def foo(x : Array[String]) = x.mkString(", ")
   
   def main(args : Array[String]) {
-    println( "Hello World!" )
+    println( "TicTacToe Game" )
     println("concat arguments = " + foo(args))
+
+    println( "- Perform Depth First Search for Win Solutions" )
+
+    val g = Game(3)
+    val dfs = DepthFirstSearch(g, X_Cell)
+    val s = new Stopwatch().start
+    dfs.search(g.gameGraph)
+    s.stop()
+    println("  Found: " + dfs.wins.size + " X wins in " + s.getElapsedTime() + " ms" )
+    dfs.wins foreach println
   }
 
 }

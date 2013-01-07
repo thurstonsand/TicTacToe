@@ -25,8 +25,13 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class GameTest extends FunSuite with ShouldMatchers {
 
+  val bs = 3
+  val g = Game(bs)
+  val gg1a = GameGraph(Board(bs, Array(0,0,0, 1,1,1, 0,0,0)), Seq())
+  val gg1b = GameGraph(Board(bs, Array(0,0,0, 1,1,1, 0,0,0)), Seq(gg1a))
+  val gg2a = GameGraph(Board(bs, Array(1,0,0, 1,1,1, 0,0,0)), Seq(gg1a))
+
   test("Game of 3x3 winLines") {
-    val g = Game(3)
     val expected = Array(
       Array(0, 1, 2),
       Array(3, 4, 5),
@@ -40,7 +45,6 @@ class GameTest extends FunSuite with ShouldMatchers {
   }
 
   test("Win Check of 3x3 board") {
-    val g = Game(3)
     g.isWin((new Board(g.boardSize,Array(1,1,1, 0,0,0, 0,0,0))), 1) should be (true)
     g.isWin((new Board(g.boardSize,Array(0,0,0, 1,1,1, 0,0,0))), 1) should be (true)
     g.isWin((new Board(g.boardSize,Array(0,0,0, 0,0,0, 1,1,1))), 1) should be (true)
@@ -58,19 +62,50 @@ class GameTest extends FunSuite with ShouldMatchers {
     g.isWin((new Board(g.boardSize,Array(0,0,1, 0,0,1, 1,0,0))), 1) should be (false)
     g.isWin((new Board(g.boardSize,Array(1,0,0, 0,1,0, 0,1,0))), 1) should be (false)
     g.isWin((new Board(g.boardSize,Array(1,0,0, 0,1,0, 1,0,0))), 1) should be (false)
+
+    g.isWin((new Board(g.boardSize,Array(2,2,2, 0,0,0, 0,0,0))), 2) should be (true)
+    g.isWin((new Board(g.boardSize,Array(2,2,2, 0,0,0, 0,0,0))), 1) should be (false)
   }
 
-  test("Generate Graph for 2x2") {
-    def playerToString(p: Int) = p match { case Empty_Cell => "E"; case O_Cell => "O"; case X_Cell => "X"; case _ => "?" }
-    def boardToString(b: Board) = b.cells.mkString(" ")
+  test("GameGraph Node equals itself") {
+    gg1a should be (gg1a)
+  }
 
-    def printGG(t: String, gg: GameGraph) {
-      println("%s%3d: [%s] %s".format(t,gg.play,playerToString(gg.playersMove),boardToString(gg.board)))
-      gg.nextPlays foreach (nextGG => printGG(t + "  ", nextGG))
+  test("Two GameGraph Nodes are equals with same values") {
+    gg1a should be (gg1b)
+    gg1a.hashCode should be (gg1b.hashCode)
+  }
+
+  test("Two GameGraph Nodes are not equals with different values") {
+    gg1a should not be (gg2a)
+    gg1a.hashCode should not be (gg2a.hashCode)
+  }
+
+  test("hashSet contains an object") {
+    val hashSet = scala.collection.Set( gg1a, gg2a )
+    hashSet.contains(gg1a) should be (true)
+  }
+
+  test("hashSet contains an object of same hashCode") {
+    val hashSet = scala.collection.Set( gg1a, gg2a )
+    hashSet.contains(gg1b) should be (true)
+  }
+
+  test("hashSet does not contains an object of different hashCode") {
+    val hashSet = scala.collection.Set( gg1a )
+    hashSet.contains(gg2a) should be (false)
+  }
+
+
+  test("Generate Graph for 2x2") {
+
+    def printGG(t: String, gg: GameGraph, play: Int, player: Int) {
+      println("%s%3d: [%s] %s".format(t, play, playerToString(player), gg.board))
+      gg.nextPlays foreach (nextGG => printGG(t + "  ", nextGG, play+1, nextPlayer(player)))
     }
 
     val g = Game(2)
     val gg = g.generateGameGraph
-    printGG("",gg)
+    printGG("", gg, 0, Empty_Cell)
   }
 }

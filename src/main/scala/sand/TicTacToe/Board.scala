@@ -7,7 +7,7 @@ package sand.TicTacToe
  * Time: 12:42 PM
  * To change this template use File | Settings | File Templates.
  */
-class Board(n: Int, c: Array[Int]) {
+case class Board(n: Int, c: Array[Int]) {
 
   val boardSize = n
   val cells = c
@@ -22,11 +22,19 @@ class Board(n: Int, c: Array[Int]) {
 
   def modified(r: Int, c: Int, newCV: Int) : Board = modified(rc2Idx(r,c), newCV)
 
+  override def hashCode = cells reduceLeft ( _ * 4 + _ )
+
+  override def equals(other: Any) = other match {
+    case otherB: Board => otherB.hashCode == this.hashCode
+    case _ => false
+  }
+
+  override def toString = "%05X / %s".format(hashCode, cells.mkString(" "))
 }
 
 object Board {
 
   def mkInitialBoard(boardSize: Int, initCellValue: Int) = {
-    new Board(boardSize, Array.fill[Int](boardSize*boardSize)(initCellValue))
+    Board(boardSize, Array.fill[Int](boardSize*boardSize)(initCellValue))
   }
 }

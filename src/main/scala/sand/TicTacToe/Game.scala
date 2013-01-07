@@ -1,5 +1,17 @@
 package sand.TicTacToe
 
+import collection.mutable
+
+case class GameGraph(board: Board, nextPlays: Seq[GameGraph]) {
+  override def hashCode = board.hashCode
+  override def equals(other: Any) = other match {
+    case otherGG: GameGraph => otherGG.hashCode == this.hashCode
+    case _ => false
+  }
+
+  override def toString = board.toString
+}
+
 /**
  * Created with IntelliJ IDEA.
  * User: Bob Sandberg
@@ -14,6 +26,7 @@ case class Game(boardSize : Int) {
   }
 
   val winLines : Array[Array[Int]] = genWinLines
+  lazy val gameGraph = generateGameGraph
 
   def rc2Idx(r: Int, c: Int) = r * boardSize + c
 
@@ -35,17 +48,29 @@ case class Game(boardSize : Int) {
   def isWin(b: Board, player: Int) =
     winLines exists ( _ forall ( b.cells(_) == player ) )
 
-  def nextPlayer(player: Int) = if ( player == X_Cell ) O_Cell else X_Cell
-
   def generateGameGraph = {
 
-    def mkGameGraph(play: Int, b: Board, player: Int) =
-        GameGraph( play, player, b, genNextMoves(play+1, b, nextPlayer(player)) )
+    //val graphSet = new mutable.Set[GameGraph] {} // Try to use this by implementing hashCode in GameGraph
+    val graphSet = new mutable.HashMap[Board, GameGraph] ()
 
-    def genNextMoves(play: Int, b: Board, player: Int) : Seq[GameGraph] =
-      for { i <- 0 until boardSize*boardSize if b.cells(i) == Empty_Cell }
-        yield mkGameGraph( play, b.modified(i, player), player)
+    def mkGameGraph(b: Board, player: Int) = {
+      val gg = GameGraph( b, genNextMoves(b, nextPlayer(player)) )
+      graphSet += gg.board -> gg
+      gg
+    }
 
-    mkGameGraph(0, Board.mkInitialBoard(boardSize, Empty_Cell), Empty_Cell)
+    def genNextMoves(b: Board, player: Int) : Seq[GameGraph] =
+      for {
+        i <- 0 until boardSize*boardSize if b.cells(i) == Empty_Cell
+        nextB = b.modified(i, player)
+        gameGraph = if ( graphSet.contains(nextB) ) graphSet(nextB) else mkGameGraph( nextB, player)
+      } yield gameGraph
+
+
+    val gg = mkGameGraph(Board.mkInitialBoard(boardSize, Empty_Cell), Empty_Cell)
+//    println("Created " + graphSet.size + " gameGraphs")
+//    graphSet.values.foreach (gg => println(gg.board))
+
+    gg
   }
 }
